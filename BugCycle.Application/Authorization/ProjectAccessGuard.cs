@@ -1,6 +1,3 @@
-// Todo: Interfaces, repsoitories, services, etc.
-
-
 using BugCycle.Application.Interfaces;
 using BugCycle.Application.Interfaces.Repositories;
 using BugCycle.Domain.Enums;
