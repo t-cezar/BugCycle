@@ -1,0 +1,154 @@
+@model MembersViewModel
+@{
+    ViewData["Title"] = $"{Model.Project.Key} membri";
+    ViewData["ActiveTab"] = "members";
+    var id = Model.Project.Id;
+    var ownerCount = Model.Members.Count(m => m.Role == ProjectRole.Owner);
+}
+
+<partial name="_ProjectHeader" model="@((ProjectPageViewModel)Model)" />
+
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="card-panel">
+            <h2 class="panel-title">Echipa proiectului</h2>
+
+            <div class="table-responsive">
+                <table class="table data-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Membru</th>
+                            <th>Email</th>
+                            <th>Rol in proiect</th>
+                            <th>Din</th>
+                            @if (Model.Permissions.CanManageMembers)
+                            {
+                                <th class="text-end">Actiuni</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var member in Model.Members)
+                        {
+                            var isLastOwner = member.Role == ProjectRole.Owner && ownerCount == 1;
+
+                            <tr>
+                                <td>
+                                    <span class="assignee">
+                                        <span class="avatar avatar-sm">@member.User.Initials</span>
+                                        @member.User.FullName
+                                    </span>
+                                </td>
+                                <td class="text-muted">@member.User.Email</td>
+                                <td>
+                                    <span class="role-pill @ProjectRoleClass(member.Role)">
+                                        @Label(member.Role)
+                                    </span>
+                                </td>
+                                <td class="text-muted">@member.JoinedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+
+                                @if (Model.Permissions.CanManageMembers)
+                                {
+                                    <td class="text-end">
+                                        <div class="d-inline-flex gap-2 align-items-center">
+                                            <form asp-action="UpdateMemberRole" asp-route-id="@id"
+                                                  asp-route-userId="@member.User.Id" method="post"
+                                                  class="d-inline-flex gap-1">
+                                                <select name="role" class="form-select form-select-sm role-picker"
+                                                        disabled="@isLastOwner">
+                                                    @foreach (var role in Enum.GetValues<ProjectRole>())
+                                                    {
+                                                        <option value="@((int)role)" selected="@(member.Role == role)">
+                                                            @Label(role)
+                                                        </option>
+                                                    }
+                                                </select>
+                                                <button type="submit" class="btn btn-sm btn-outline-primary"
+                                                        disabled="@isLastOwner">
+                                                    Aplic&#259;
+                                                </button>
+                                            </form>
+
+                                            <form asp-action="RemoveMember" asp-route-id="@id"
+                                                  asp-route-userId="@member.User.Id" method="post"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('Issue-urile asignate acestui membru in proiect vor deveni neasignate. Continui?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                        disabled="@isLastOwner">
+                                                    Scoate
+                                                </button>
+                                            </form>
+                                        </div>
+
+                                        @if (isLastOwner)
+                                        {
+                                            <div class="row-hint">ultimul Owner nu poate fi schimbat</div>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        @if (Model.Permissions.CanManageMembers)
+        {
+            <div class="card-panel">
+                <h2 class="panel-title">Adauga membru</h2>
+
+                <form asp-action="AddMember" asp-route-id="@id" method="post" novalidate>
+                    <div class="mb-3">
+                        <label asp-for="NewMember.Email" class="form-label">Email</label>
+                        <input asp-for="NewMember.Email" class="form-control"
+                               placeholder=@("coleg@bugcycle.local") />
+                        <span asp-validation-for="NewMember.Email" class="field-error"></span>
+                        <small class="form-hint">Persoana trebuie sa aiba deja cont in BugCycle.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NewMember.Role" class="form-label">Rol</label>
+                        <select asp-for="NewMember.Role" class="form-select">
+                            @foreach (var role in Enum.GetValues<ProjectRole>())
+                            {
+                                <option value="@((int)role)">@Label(role)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Adauga</button>
+                </form>
+            </div>
+        }
+
+        <div class="card-panel mt-4 info-panel">
+            <h2 class="panel-title">Ce poate fiecare rol</h2>
+            <table class="table permissions-table">
+                <thead>
+                    <tr>
+                        <th>Actiune</th>
+                        <th>Owner</th>
+                        <th>Member</th>
+                        <th>Viewer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Vede board si backlog</td><td>da</td><td>da</td><td>da</td></tr>
+                    <tr><td>Creeaza si editeaza issue-uri</td><td>da</td><td>da</td><td>nu</td></tr>
+                    <tr><td>Muta carduri pe board</td><td>da</td><td>da</td><td>nu</td></tr>
+                    <tr><td>Comenteaza</td><td>da</td><td>da</td><td>nu</td></tr>
+                    <tr><td>Gestioneaza sprinturi</td><td>da</td><td>nu</td><td>nu</td></tr>
+                    <tr><td>Gestioneaza membri</td><td>da</td><td>nu</td><td>nu</td></tr>
+                    <tr><td>Sterge issue-uri</td><td>da</td><td>nu</td><td>nu</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,82 @@
+@model ProfileViewModel
+@{
+    ViewData["Title"] = "Profilul meu";
+}
+
+<div class="page-head">
+    <h1>Profilul meu</h1>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card-panel">
+            <div class="profile-identity">
+                <span class="avatar avatar-lg">@Model.Initials</span>
+                <div>
+                    <h2>@Model.FullName</h2>
+                    <p class="text-muted mb-0">@Model.Email</p>
+                </div>
+            </div>
+
+            <dl class="profile-facts">
+                <div>
+                    <dt>Roluri de sistem</dt>
+                    <dd>
+                        @foreach (var role in Model.Roles)
+                        {
+                            <span class="role-pill @(role == AppRoles.Admin ? "role-owner" : "role-member")">
+                                @role
+                            </span>
+                        }
+                    </dd>
+                </div>
+                <div>
+                    <dt>Proiecte</dt>
+                    <dd>@Model.ProjectCount</dd>
+                </div>
+                <div>
+                    <dt>Issue-uri deschise asignate</dt>
+                    <dd>@Model.AssignedIssueCount</dd>
+                </div>
+                <div>
+                    <dt>Cont creat</dt>
+                    <dd>@Model.CreatedAt.ToLocalTime().ToString("dd MMMM yyyy")</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card-panel">
+            <h2 class="panel-title">Date personale</h2>
+
+            <form asp-action="Profile" method="post" novalidate>
+                <div class="mb-3">
+                    <label asp-for="FullName" class="form-label"></label>
+                    <input asp-for="FullName" class="form-control" />
+                    <span asp-validation-for="FullName" class="field-error"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" disabled />
+                    <small class="form-hint">
+                        Adresa de email este identificatorul contului si nu se poate schimba.
+                    </small>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Salveaza</button>
+            </form>
+        </div>
+
+        <div class="card-panel mt-4">
+            <h2 class="panel-title">Securitate</h2>
+            <p class="text-muted">Schimba parola contului.</p>
+            <a class="btn btn-outline-secondary" asp-action="ChangePassword">Schimba parola</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

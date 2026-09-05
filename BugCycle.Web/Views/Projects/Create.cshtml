@@ -1,0 +1,48 @@
+@model SaveProjectDto
+@{
+    ViewData["Title"] = "Proiect nou";
+}
+
+<div class="form-shell">
+    <div class="card-panel">
+        <h1>Proiect nou</h1>
+        <p class="text-muted">
+            Vei deveni automat Owner al proiectului, cu drept de a gestiona
+            membrii si sprinturile.
+        </p>
+
+        <form asp-action="Create" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="Key" class="form-label"></label>
+                    <input asp-for="Key" class="form-control text-uppercase" placeholder="BUG" />
+                    <span asp-validation-for="Key" class="field-error"></span>
+                    <small class="form-hint">Formeaza identificatorii, de exemplu BUG-14.</small>
+                </div>
+
+                <div class="col-md-8">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" placeholder="BugCycle Platform" />
+                    <span asp-validation-for="Name" class="field-error"></span>
+                </div>
+
+                <div class="col-12">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                    <span asp-validation-for="Description" class="field-error"></span>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Creeaza proiectul</button>
+                <a class="btn btn-outline-secondary" asp-action="Index">Renunta</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,81 @@
+@model AdminProjectsViewModel
+@{
+    ViewData["Title"] = "Toate proiectele";
+}
+
+<div class="page-head">
+    <div>
+        <h1>Toate proiectele</h1>
+        <p class="page-subtitle">
+            Vedere de administrator peste toate proiectele din aplicatie,
+            inclusiv cele in care nu ai niciun rol.
+        </p>
+    </div>
+    <a class="btn btn-sm @(Model.IncludeArchived ? "btn-secondary" : "btn-outline-secondary")"
+       asp-action="Projects" asp-route-includeArchived="@(!Model.IncludeArchived)">
+        @(Model.IncludeArchived ? "Ascunde arhivate" : "Arata arhivate")
+    </a>
+</div>
+
+<div class="card-panel">
+    <div class="table-responsive">
+        <table class="table data-table align-middle">
+            <thead>
+                <tr>
+                    <th>Prefix</th>
+                    <th>Nume</th>
+                    <th>Creat de</th>
+                    <th>Membri</th>
+                    <th>Issue-uri</th>
+                    <th>Stare</th>
+                    <th class="text-end">Actiuni</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var project in Model.Projects)
+                {
+                    <tr>
+                        <td><span class="project-key">@project.Key</span></td>
+                        <td>
+                            <a asp-controller="Projects" asp-action="Backlog" asp-route-id="@project.Id">
+                                @project.Name
+                            </a>
+                        </td>
+                        <td class="text-muted">@project.CreatedByName</td>
+                        <td class="text-muted">@project.MemberCount</td>
+                        <td class="text-muted">@project.IssueCount</td>
+                        <td>
+                            @if (project.IsArchived)
+                            {
+                                <span class="badge-archived">arhivat</span>
+                            }
+                            else
+                            {
+                                <span class="status-chip status-progress">activ</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <form asp-action="DeleteProject" asp-route-id="@project.Id" method="post"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Proiectul, cele @project.IssueCount issue-uri, sprinturile si comentariile lui vor fi sterse definitiv. Continui?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    Sterge definitiv
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card-panel mt-4 info-panel">
+    <h2 class="panel-title">Arhivare fata de stergere</h2>
+    <p class="text-muted mb-0">
+        Arhivarea este reversibila si pastreaza istoricul: proiectul devine
+        read-only. Stergerea este definitiva si duce cu ea issue-urile,
+        sprinturile, comentariile si legaturile cu etichetele. Din acest motiv
+        stergerea este disponibila doar aici, in panoul de administrare.
+    </p>
+</div>

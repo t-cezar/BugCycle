@@ -1,0 +1,87 @@
+@model ProjectListViewModel
+@{
+    ViewData["Title"] = "Proiecte";
+}
+
+<div class="page-head">
+    <div>
+        <h1>Proiecte</h1>
+        <p class="page-subtitle">Proiectele in care ai un rol.</p>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        <a class="btn btn-sm @(Model.IncludeArchived ? "btn-secondary" : "btn-outline-secondary")"
+           asp-action="Index" asp-route-includeArchived="@(!Model.IncludeArchived)">
+            @(Model.IncludeArchived ? "Ascunde arhivate" : "Arata arhivate")
+        </a>
+        <a class="btn btn-primary" asp-action="Create">Proiect nou</a>
+    </div>
+</div>
+
+@if (Model.Projects.Count == 0)
+{
+    <div class="card-panel">
+        <div class="empty-state">
+            <h2>Niciun proiect deocamdata</h2>
+            <p>
+                Creeaza un proiect ca sa incepi sa urmaresti issue-uri. Vei deveni
+                automat Owner si vei putea invita colegi.
+            </p>
+            <a class="btn btn-primary" asp-action="Create">Creeaza primul proiect</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="project-grid">
+        @foreach (var project in Model.Projects)
+        {
+            <div class="project-card @(project.IsArchived ? "is-archived" : "")">
+                <div class="project-card-head">
+                    <span class="project-key">@project.Key</span>
+                    @if (project.MyRole is not null)
+                    {
+                        <span class="role-pill @ProjectRoleClass(project.MyRole.Value)">
+                            @Label(project.MyRole.Value)
+                        </span>
+                    }
+                </div>
+
+                <h2 class="project-card-title">
+                    <a asp-action="Backlog" asp-route-id="@project.Id">@project.Name</a>
+                </h2>
+
+                <p class="project-card-desc">
+                    @(string.IsNullOrWhiteSpace(project.Description)
+                        ? "Fara descriere."
+                        : project.Description)
+                </p>
+
+                <div class="project-card-stats">
+                    <span>@project.IssueCount issue-uri</span>
+                    <span>@project.MemberCount membri</span>
+                    @if (project.IsArchived)
+                    {
+                        <span class="badge-archived">arhivat</span>
+                    }
+                </div>
+
+                <div class="project-card-actions">
+                    <a class="btn btn-sm btn-outline-primary"
+                       asp-action="Backlog" asp-route-id="@project.Id">Backlog</a>
+                    <a class="btn btn-sm btn-outline-secondary"
+                       asp-action="Board" asp-route-id="@project.Id">Board</a>
+
+                    @if (project.MyRole == ProjectRole.Owner || User.IsInRole(AppRoles.Admin))
+                    {
+                        <form asp-action="Archive" asp-route-id="@project.Id" method="post" class="d-inline">
+                            <input type="hidden" name="archived" value="@((!project.IsArchived).ToString())" />
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                @(project.IsArchived ? "Dezarhiveaza" : "Arhiveaza")
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

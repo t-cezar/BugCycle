@@ -1,0 +1,121 @@
+@model CreateIssueViewModel
+@{
+    ViewData["Title"] = "Issue nou";
+}
+
+<div class="form-shell">
+    <div class="card-panel">
+        <h1>Issue nou</h1>
+        <p class="text-muted">
+            In proiectul <strong>@Model.ProjectName</strong>. Issue-ul primeste
+            automat urmatorul numar din secventa @Model.ProjectKey si porneste in
+            statusul To Do.
+        </p>
+
+        <form asp-action="Create" method="post" novalidate>
+            <input type="hidden" asp-for="Input.ProjectId" />
+
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+            <div class="row g-3">
+                <div class="col-12">
+                    <label asp-for="Input.Title" class="form-label">Titlu</label>
+                    <input asp-for="Input.Title" class="form-control"
+                           placeholder="Descrie problema in cateva cuvinte" />
+                    <span asp-validation-for="Input.Title" class="field-error"></span>
+                </div>
+
+                <div class="col-12">
+                    <label asp-for="Input.Description" class="form-label">Descriere</label>
+                    <textarea asp-for="Input.Description" class="form-control"
+                              rows="6" placeholder="Pasi de reproducere, comportament asteptat..."></textarea>
+                    <span asp-validation-for="Input.Description" class="field-error"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="Input.Type" class="form-label">Tip</label>
+                    <select asp-for="Input.Type" class="form-select">
+                        @foreach (var type in Enum.GetValues<IssueType>())
+                        {
+                            <option value="@((int)type)">@Label(type)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="Input.Priority" class="form-label">Prioritate</label>
+                    <select asp-for="Input.Priority" class="form-select">
+                        @foreach (var priority in Enum.GetValues<IssuePriority>())
+                        {
+                            <option value="@((int)priority)">@Label(priority)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="Input.StoryPoints" class="form-label">Story points</label>
+                    <input asp-for="Input.StoryPoints" type="number"
+                           min="0" max="100" class="form-control" />
+                    <span asp-validation-for="Input.StoryPoints" class="field-error"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Input.AssigneeId" class="form-label">Asignat lui</label>
+                    <select asp-for="Input.AssigneeId" class="form-select">
+                        <option value="">neasignat</option>
+                        @foreach (var user in Model.AssignableUsers)
+                        {
+                            <option value="@user.Id">@user.FullName</option>
+                        }
+                    </select>
+                    <small class="form-hint">
+                        Apar doar membrii cu rol Owner sau Member: un Viewer nu poate lucra.
+                    </small>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Input.SprintId" class="form-label">Sprint</label>
+                    <select asp-for="Input.SprintId" class="form-select">
+                        <option value="">backlog</option>
+                        @foreach (var sprint in Model.OpenSprints)
+                        {
+                            <option value="@sprint.Id">@sprint.Name (@Label(sprint.Status))</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Etichete</label>
+                    <div class="label-picker">
+                        @foreach (var label in Model.Labels)
+                        {
+                            <label class="label-option">
+                                <input type="checkbox" name="Input.LabelIds" value="@label.Id"
+                                       checked="@Model.Input.LabelIds.Contains(label.Id)" />
+                                <span class="label-chip" style="background-color:@label.ColorHex">
+                                    @label.Name
+                                </span>
+                            </label>
+                        }
+                    </div>
+                    @if (Model.Labels.Count == 0)
+                    {
+                        <small class="form-hint">
+                            Nu exista etichete globale. Un administrator le poate crea din panoul de administrare.
+                        </small>
+                    }
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Creeaza issue-ul</button>
+                <a class="btn btn-outline-secondary" asp-controller="Projects" asp-action="Backlog"
+                   asp-route-id="@Model.Input.ProjectId">Renunta</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

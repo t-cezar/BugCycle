@@ -1,0 +1,15 @@
+@model BugCycle.Web.ViewModels.ProblemViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="problem-page">
+    <span class="problem-status">@Model.Status</span>
+    <h1>@Model.Title</h1>
+    <p>@Model.Message</p>
+
+    <div class="d-flex gap-2 justify-content-center">
+        <a class="btn btn-primary" asp-controller="Dashboard" asp-action="Index">Inapoi la dashboard</a>
+        <a class="btn btn-outline-secondary" asp-controller="Projects" asp-action="Index">Proiectele mele</a>
+    </div>
+</div>

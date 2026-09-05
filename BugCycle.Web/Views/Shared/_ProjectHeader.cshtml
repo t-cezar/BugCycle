@@ -1,0 +1,65 @@
+@model BugCycle.Web.ViewModels.ProjectPageViewModel
+@{
+    var active = ViewData["ActiveTab"] as string ?? "backlog";
+    var id = Model.Project.Id;
+}
+
+<div class="project-header">
+    <div class="project-header-top">
+        <div>
+            <div class="project-title">
+                <span class="project-key">@Model.Project.Key</span>
+                <h1>@Model.Project.Name</h1>
+                @if (Model.Project.IsArchived)
+                {
+                    <span class="badge-archived">arhivat</span>
+                }
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.Project.Description))
+            {
+                <p class="project-description">@Model.Project.Description</p>
+            }
+        </div>
+
+        <div class="project-header-meta">
+            @if (Model.Permissions.Role is not null)
+            {
+                <span class="role-pill @ProjectRoleClass(Model.Permissions.Role.Value)">
+                    @Label(Model.Permissions.Role.Value)
+                </span>
+            }
+            else if (Model.Permissions.IsSystemAdmin)
+            {
+                <span class="role-pill role-owner">Admin de sistem</span>
+            }
+
+            <span class="meta-item">@Model.Project.IssueCount issue-uri</span>
+            <span class="meta-item">@Model.Project.MemberCount membri</span>
+
+            @if (Model.Permissions.CanEditIssues && !Model.Project.IsArchived)
+            {
+                <a class="btn btn-sm btn-primary"
+                   asp-controller="Issues" asp-action="Create"
+                   asp-route-projectId="@id">Issue nou</a>
+            }
+
+            @if (Model.Permissions.CanEditProject)
+            {
+                <a class="btn btn-sm btn-outline-secondary"
+                   asp-controller="Projects" asp-action="Edit"
+                   asp-route-id="@id">Setari</a>
+            }
+        </div>
+    </div>
+
+    <nav class="project-tabs">
+        <a class="project-tab @(active == "backlog" ? "is-active" : "")"
+           asp-controller="Projects" asp-action="Backlog" asp-route-id="@id">Backlog</a>
+        <a class="project-tab @(active == "sprints" ? "is-active" : "")"
+           asp-controller="Projects" asp-action="Sprints" asp-route-id="@id">Sprinturi</a>
+        <a class="project-tab @(active == "board" ? "is-active" : "")"
+           asp-controller="Projects" asp-action="Board" asp-route-id="@id">Board</a>
+        <a class="project-tab @(active == "members" ? "is-active" : "")"
+           asp-controller="Projects" asp-action="Members" asp-route-id="@id">Membri</a>
+    </nav>
+</div>

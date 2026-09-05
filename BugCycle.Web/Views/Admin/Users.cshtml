@@ -1,0 +1,100 @@
+@model AdminUsersViewModel
+@{
+    ViewData["Title"] = "Utilizatori si roluri";
+}
+
+<div class="page-head">
+    <div>
+        <h1>Utilizatori si roluri</h1>
+        <p class="page-subtitle">
+            Rolurile de sistem sunt separate de rolurile din proiecte. Admin
+            inseamna acces la administrarea aplicatiei, nu un rol intr-o echipa.
+        </p>
+    </div>
+</div>
+
+<div class="card-panel">
+    <div class="table-responsive">
+        <table class="table data-table align-middle">
+            <thead>
+                <tr>
+                    <th>Utilizator</th>
+                    <th>Email</th>
+                    <th>Roluri de sistem</th>
+                    <th>Proiecte</th>
+                    <th>Cont creat</th>
+                    <th class="text-end">Actiuni</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Users)
+                {
+                    var isSelf = user.Id == Model.CurrentUserId;
+                    var isAdmin = user.Roles.Contains(AppRoles.Admin);
+
+                    <tr>
+                        <td>
+                            <span class="assignee">
+                                <span class="avatar avatar-sm">@user.Initials</span>
+                                @user.FullName
+                                @if (isSelf)
+                                {
+                                    <span class="self-tag">tu</span>
+                                }
+                            </span>
+                        </td>
+                        <td class="text-muted">@user.Email</td>
+                        <td>
+                            @foreach (var role in user.Roles)
+                            {
+                                <span class="role-pill @(role == AppRoles.Admin ? "role-owner" : "role-member")">
+                                    @role
+                                </span>
+                            }
+                        </td>
+                        <td class="text-muted">@user.ProjectCount</td>
+                        <td class="text-muted">@user.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                        <td class="text-end">
+                            @if (isAdmin)
+                            {
+                                <form asp-action="RemoveRole" asp-route-id="@user.Id" method="post"
+                                      class="d-inline">
+                                    <input type="hidden" name="role" value="@AppRoles.Admin" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            disabled="@isSelf">
+                                        Retrage Admin
+                                    </button>
+                                </form>
+
+                                @if (isSelf)
+                                {
+                                    <div class="row-hint">nu iti poti retrage propriul rol</div>
+                                }
+                            }
+                            else
+                            {
+                                <form asp-action="AddRole" asp-route-id="@user.Id" method="post"
+                                      class="d-inline">
+                                    <input type="hidden" name="role" value="@AppRoles.Admin" />
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                        Promoveaza la Admin
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card-panel mt-4 info-panel">
+    <h2 class="panel-title">Politica de administrare</h2>
+    <ul class="rules-list">
+        <li>Un administrator nu isi poate retrage propriul rol.</li>
+        <li>Sistemul pastreaza cel putin un cont cu rol Admin.</li>
+        <li>Rolul User este obligatoriu si nu se retrage.</li>
+        <li>Conturile nu se sterg. Autorii issue-urilor si ai comentariilor raman in istoric.</li>
+    </ul>
+</div>

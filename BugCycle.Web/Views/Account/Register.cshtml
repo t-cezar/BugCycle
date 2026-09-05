@@ -1,0 +1,56 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Creeaza cont";
+}
+
+<div class="auth-shell">
+    <div class="auth-card">
+        <h1>Creeaza cont</h1>
+        <p class="auth-subtitle">
+            Contul nou primeste rolul User. Cere unui administrator sa te promoveze
+            daca ai nevoie de acces la panoul de administrare.
+        </p>
+
+        <form asp-action="Register" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+            <div class="mb-3">
+                <label asp-for="FullName" class="form-label"></label>
+                <input asp-for="FullName" class="form-control" autocomplete="name" />
+                <span asp-validation-for="FullName" class="field-error"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" autocomplete="username" />
+                <span asp-validation-for="Email" class="field-error"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="Password" class="field-error"></span>
+                <small class="form-hint">
+                    Minim 8 caractere, cu cel putin o litera mare si o cifra.
+                </small>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="ConfirmPassword" class="form-label"></label>
+                <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="ConfirmPassword" class="field-error"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Creeaza cont</button>
+        </form>
+
+        <p class="auth-switch">
+            Ai deja cont?
+            <a asp-action="Login">Autentifica-te</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

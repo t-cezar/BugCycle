@@ -1,0 +1,61 @@
+@model BoardViewModel
+@{
+    ViewData["Title"] = $"{Model.Project.Key} board";
+    ViewData["ActiveTab"] = "board";
+    var id = Model.Project.Id;
+    var canDrag = Model.Permissions.CanEditIssues && !Model.Project.IsArchived;
+}
+
+<partial name="_ProjectHeader" model="@((ProjectPageViewModel)Model)" />
+
+@if (Model.ActiveSprint is not null)
+{
+    <div class="sprint-banner">
+        <div>
+            <span class="sprint-banner-label">Sprint activ</span>
+            <h2>@Model.ActiveSprint.Name</h2>
+            @if (!string.IsNullOrWhiteSpace(Model.ActiveSprint.Goal))
+            {
+                <p class="sprint-goal">@Model.ActiveSprint.Goal</p>
+            }
+        </div>
+        <div class="sprint-banner-meta">
+            <span>
+                @Model.ActiveSprint.StartDate.ToString("dd MMM")
+                &ndash; @Model.ActiveSprint.EndDate.ToString("dd MMM yyyy")
+            </span>
+            <span class="sprint-remaining">
+                @(Model.ActiveSprint.DaysRemaining >= 0
+                    ? $"{Model.ActiveSprint.DaysRemaining} zile ramase"
+                    : $"intarziere de {Math.Abs(Model.ActiveSprint.DaysRemaining)} zile")
+            </span>
+            @if (Model.Permissions.CanManageSprints)
+            {
+                <form asp-action="CompleteSprint" asp-route-id="@id"
+                      asp-route-sprintId="@Model.ActiveSprint.Id" method="post"
+                      onsubmit="return confirm('Issue-urile nefinalizate se vor intoarce in backlog. Continui?');">
+                    <button type="submit" class="btn btn-sm btn-outline-light">Incheie sprintul</button>
+                </form>
+            }
+        </div>
+    </div>
+}
+
+@*
+    Widget-ul Vue. Datele de care are nevoie vin prin data-attributes, nu prin
+    JSON inline: sunt trei valori scalare si asa nu exista risc de a scapa
+    ceva neescapat in pagina.
+*@
+<div id="board-app"
+     data-project-id="@id"
+     data-sprint-id="@(Model.ActiveSprint?.Id.ToString() ?? string.Empty)"
+     data-can-edit="@canDrag.ToString().ToLowerInvariant()">
+    <div class="board-loading">Se incarca board-ul...</div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/vue@3.4.38/dist/vue.global.prod.js"></script>
+    <script src="~/js/board/api.js" asp-append-version="true"></script>
+    <script src="~/js/board/components.js" asp-append-version="true"></script>
+    <script src="~/js/board/app.js" asp-append-version="true"></script>
+}

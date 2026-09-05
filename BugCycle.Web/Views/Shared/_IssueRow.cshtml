@@ -1,0 +1,45 @@
+@model BugCycle.Application.DTOs.Issues.IssueDto
+
+<tr>
+    <td class="col-key">
+        <span class="type-chip @TypeClass(Model.Type)" title="@Label(Model.Type)">
+            @TypeIcon(Model.Type)
+        </span>
+        <a asp-controller="Issues" asp-action="Details" asp-route-id="@Model.Id" class="issue-key">
+            @Model.DisplayKey
+        </a>
+    </td>
+    <td>
+        <a asp-controller="Issues" asp-action="Details" asp-route-id="@Model.Id" class="issue-title">
+            @Model.Title
+        </a>
+        @if (Model.Labels.Count > 0)
+        {
+            <div class="label-strip">
+                @foreach (var label in Model.Labels)
+                {
+                    <span class="label-chip" style="background-color:@label.ColorHex">@label.Name</span>
+                }
+            </div>
+        }
+    </td>
+    <td><span class="status-chip @StatusClass(Model.Status)">@Label(Model.Status)</span></td>
+    <td><span class="priority-chip @PriorityClass(Model.Priority)">@Label(Model.Priority)</span></td>
+    <td>
+        @if (Model.Assignee is not null)
+        {
+            <span class="assignee">
+                <span class="avatar avatar-sm">@Model.Assignee.Initials</span>
+                @Model.Assignee.FullName
+            </span>
+        }
+        else
+        {
+            <span class="text-muted">neasignat</span>
+        }
+    </td>
+    <td class="text-muted">
+        @(Model.SprintName ?? "backlog")
+    </td>
+    <td class="text-muted text-nowrap">@(Model.StoryPoints?.ToString() ?? "-")</td>
+</tr>

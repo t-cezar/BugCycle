@@ -1,0 +1,208 @@
+@model IssueDetailViewModel
+@{
+    var issue = Model.Issue;
+    ViewData["Title"] = $"{issue.DisplayKey} {issue.Title}";
+}
+
+<div class="issue-detail">
+    <nav class="breadcrumb-line">
+        <a asp-controller="Projects" asp-action="Backlog" asp-route-id="@issue.ProjectId">
+            @issue.ProjectName
+        </a>
+        <span>/</span>
+        <span>@issue.DisplayKey</span>
+    </nav>
+
+    <div class="row g-4">
+        <div class="col-xl-8">
+            <div class="card-panel">
+                <div class="issue-detail-head">
+                    <span class="type-chip @TypeClass(issue.Type)" title="@Label(issue.Type)">
+                        @TypeIcon(issue.Type)
+                    </span>
+                    <h1>@issue.Title</h1>
+                </div>
+
+                <div class="issue-detail-chips">
+                    <span class="status-chip @StatusClass(issue.Status)">@Label(issue.Status)</span>
+                    <span class="priority-chip @PriorityClass(issue.Priority)">@Label(issue.Priority)</span>
+                    @foreach (var label in issue.Labels)
+                    {
+                        <span class="label-chip" style="background-color:@label.ColorHex">@label.Name</span>
+                    }
+                </div>
+
+                <section class="issue-description">
+                    <h2 class="panel-title">Descriere</h2>
+                    @if (string.IsNullOrWhiteSpace(issue.Description))
+                    {
+                        <p class="text-muted">Fara descriere.</p>
+                    }
+                    else
+                    {
+                        <p class="preserve-lines">@issue.Description</p>
+                    }
+                </section>
+
+                @if (issue.CanEdit || issue.CanDelete)
+                {
+                    <div class="issue-detail-actions">
+                        @if (issue.CanEdit)
+                        {
+                            <a class="btn btn-primary" asp-action="Edit" asp-route-id="@issue.Id">
+                                Editeaza
+                            </a>
+                        }
+                        @if (issue.CanDelete)
+                        {
+                            <form asp-action="Delete" asp-route-id="@issue.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('Issue-ul, comentariile si etichetele lui vor fi sterse definitiv. Continui?');">
+                                <input type="hidden" name="projectId" value="@issue.ProjectId" />
+                                <button type="submit" class="btn btn-outline-danger">Sterge issue-ul</button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="card-panel mt-4">
+                <h2 class="panel-title">Comentarii (@issue.Comments.Count)</h2>
+
+                @if (issue.Comments.Count == 0)
+                {
+                    <p class="text-muted">Niciun comentariu deocamdata.</p>
+                }
+                else
+                {
+                    <ul class="comment-list">
+                        @foreach (var comment in issue.Comments)
+                        {
+                            <li class="comment">
+                                <span class="avatar avatar-sm">@comment.Author.Initials</span>
+                                <div class="comment-body">
+                                    <div class="comment-head">
+                                        <strong>@comment.Author.FullName</strong>
+                                        <span class="comment-time" title="@comment.CreatedAt.ToLocalTime()">
+                                            @RelativeTime(comment.CreatedAt)
+                                        </span>
+                                        @if (comment.WasEdited)
+                                        {
+                                            <span class="comment-edited">(editat)</span>
+                                        }
+
+                                        @if (comment.CanDelete)
+                                        {
+                                            <form asp-action="DeleteComment" asp-route-id="@issue.Id"
+                                                  asp-route-commentId="@comment.Id" method="post"
+                                                  class="comment-delete"
+                                                  onsubmit="return confirm('Stergi comentariul?');">
+                                                <button type="submit" class="btn-link-danger">sterge</button>
+                                            </form>
+                                        }
+                                    </div>
+                                    <p class="preserve-lines">@comment.Body</p>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+
+                @if (issue.CanComment)
+                {
+                    <form asp-action="AddComment" asp-route-id="@issue.Id" method="post"
+                          class="comment-form" novalidate>
+                        <label asp-for="NewComment.Body" class="form-label">Adauga un comentariu</label>
+                        <textarea asp-for="NewComment.Body" class="form-control" rows="3"
+                                  placeholder="Ce ai aflat despre acest issue?"></textarea>
+                        <span asp-validation-for="NewComment.Body" class="field-error"></span>
+                        <button type="submit" class="btn btn-primary mt-2">Comenteaza</button>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-muted mt-3">
+                        Rolul tau in acest proiect nu permite comentarii.
+                    </p>
+                }
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card-panel">
+                <h2 class="panel-title">Detalii</h2>
+
+                <dl class="issue-facts">
+                    <div>
+                        <dt>Status</dt>
+                        <dd><span class="status-chip @StatusClass(issue.Status)">@Label(issue.Status)</span></dd>
+                    </div>
+                    <div>
+                        <dt>Assignee</dt>
+                        <dd>
+                            @if (issue.Assignee is not null)
+                            {
+                                <span class="assignee">
+                                    <span class="avatar avatar-sm">@issue.Assignee.Initials</span>
+                                    @issue.Assignee.FullName
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">neasignat</span>
+                            }
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>Raportat de</dt>
+                        <dd>
+                            <span class="assignee">
+                                <span class="avatar avatar-sm">@issue.Reporter.Initials</span>
+                                @issue.Reporter.FullName
+                            </span>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>Sprint</dt>
+                        <dd>
+                            @if (issue.SprintId is not null)
+                            {
+                                <a asp-controller="Projects" asp-action="Sprints" asp-route-id="@issue.ProjectId">
+                                    @issue.SprintName
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">backlog</span>
+                            }
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>Story points</dt>
+                        <dd>@(issue.StoryPoints?.ToString() ?? "-")</dd>
+                    </div>
+                    <div>
+                        <dt>Creat</dt>
+                        <dd title="@issue.CreatedAt.ToLocalTime()">@RelativeTime(issue.CreatedAt)</dd>
+                    </div>
+                    <div>
+                        <dt>Ultima modificare</dt>
+                        <dd title="@issue.UpdatedAt.ToLocalTime()">@RelativeTime(issue.UpdatedAt)</dd>
+                    </div>
+                    @if (issue.ClosedAt is not null)
+                    {
+                        <div>
+                            <dt>Finalizat</dt>
+                            <dd title="@issue.ClosedAt.Value.ToLocalTime()">
+                                @RelativeTime(issue.ClosedAt.Value)
+                            </dd>
+                        </div>
+                    }
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

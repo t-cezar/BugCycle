@@ -1,0 +1,181 @@
+@model SprintsViewModel
+@{
+    ViewData["Title"] = $"{Model.Project.Key} sprinturi";
+    ViewData["ActiveTab"] = "sprints";
+    var id = Model.Project.Id;
+    var hasActive = Model.Sprints.Any(s => s.Status == SprintStatus.Active);
+}
+
+<partial name="_ProjectHeader" model="@((ProjectPageViewModel)Model)" />
+
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="card-panel">
+            <h2 class="panel-title">Sprinturi</h2>
+
+            @if (Model.Sprints.Count == 0)
+            {
+                <div class="empty-state">
+                    <p>Niciun sprint deocamdata. Creeaza unul si adauga issue-uri din backlog.</p>
+                </div>
+            }
+            else
+            {
+                <div class="sprint-list">
+                    @foreach (var sprint in Model.Sprints)
+                    {
+                        var progress = sprint.IssueCount == 0
+                            ? 0
+                            : (int)Math.Round(100.0 * sprint.DoneCount / sprint.IssueCount);
+
+                        <div class="sprint-card @SprintStatusClass(sprint.Status)">
+                            <div class="sprint-card-head">
+                                <div>
+                                    <h3>@sprint.Name</h3>
+                                    <span class="sprint-status">@Label(sprint.Status)</span>
+                                </div>
+                                <div class="sprint-dates">
+                                    @sprint.StartDate.ToString("dd MMM") &ndash; @sprint.EndDate.ToString("dd MMM yyyy")
+                                    @if (sprint.Status == SprintStatus.Active)
+                                    {
+                                        <span class="sprint-remaining">
+                                            @(sprint.DaysRemaining >= 0
+                                                ? $"{sprint.DaysRemaining} zile ramase"
+                                                : $"intarziere de {Math.Abs(sprint.DaysRemaining)} zile")
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(sprint.Goal))
+                            {
+                                <p class="sprint-goal">@sprint.Goal</p>
+                            }
+
+                            <div class="sprint-progress">
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width:@progress%"
+                                         aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <span class="sprint-progress-text">
+                                    @sprint.DoneCount / @sprint.IssueCount issue-uri finalizate
+                                    &middot; @sprint.DoneStoryPoints / @sprint.TotalStoryPoints SP
+                                </span>
+                            </div>
+
+                            <div class="sprint-actions">
+                                @if (sprint.Status == SprintStatus.Active)
+                                {
+                                    <a class="btn btn-sm btn-primary" asp-action="Board" asp-route-id="@id">
+                                        Deschide board-ul
+                                    </a>
+                                }
+
+                                @if (Model.Permissions.CanManageSprints)
+                                {
+                                    @if (sprint.Status == SprintStatus.Planned)
+                                    {
+                                        <form asp-action="StartSprint" asp-route-id="@id"
+                                              asp-route-sprintId="@sprint.Id" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-success"
+                                                    disabled="@hasActive">
+                                                Porneste sprintul
+                                            </button>
+                                        </form>
+                                    }
+
+                                    @if (sprint.Status == SprintStatus.Active)
+                                    {
+                                        <form asp-action="CompleteSprint" asp-route-id="@id"
+                                              asp-route-sprintId="@sprint.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('Issue-urile nefinalizate se vor intoarce in backlog. Continui?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                Incheie sprintul
+                                            </button>
+                                        </form>
+                                    }
+
+                                    @if (sprint.Status != SprintStatus.Completed)
+                                    {
+                                        <form asp-action="DeleteSprint" asp-route-id="@id"
+                                              asp-route-sprintId="@sprint.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('Sprintul va fi sters si issue-urile lui se vor intoarce in backlog. Continui?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                Sterge
+                                            </button>
+                                        </form>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        @if (Model.Permissions.CanManageSprints && !Model.Project.IsArchived)
+        {
+            <div class="card-panel">
+                <h2 class="panel-title">Sprint nou</h2>
+
+                <form asp-action="CreateSprint" asp-route-id="@id" method="post" novalidate>
+                    <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="NewSprint.Name" class="form-label">Nume</label>
+                        <input asp-for="NewSprint.Name" class="form-control"
+                               placeholder="Sprint 6" />
+                        <span asp-validation-for="NewSprint.Name" class="field-error"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NewSprint.Goal" class="form-label">Obiectiv</label>
+                        <textarea asp-for="NewSprint.Goal" class="form-control" rows="2"></textarea>
+                        <span asp-validation-for="NewSprint.Goal" class="field-error"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NewSprint.StartDate" class="form-label">Data de inceput</label>
+                        <input asp-for="NewSprint.StartDate" type="date" class="form-control" />
+                        <span asp-validation-for="NewSprint.StartDate" class="field-error"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NewSprint.EndDate" class="form-label">Data de sfarsit</label>
+                        <input asp-for="NewSprint.EndDate" type="date" class="form-control" />
+                        <span asp-validation-for="NewSprint.EndDate" class="field-error"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Creeaza sprintul</button>
+                </form>
+            </div>
+        }
+        else if (!Model.Permissions.CanManageSprints)
+        {
+            <div class="card-panel info-panel">
+                <h2 class="panel-title">Cine gestioneaza sprinturile</h2>
+                <p class="text-muted mb-0">
+                    Doar un Owner al proiectului poate crea, porni sau incheia sprinturi.
+                    Rolul tau actual este
+                    <strong>@(Model.Permissions.Role is null ? "Admin de sistem" : Label(Model.Permissions.Role.Value))</strong>.
+                </p>
+            </div>
+        }
+
+        <div class="card-panel mt-4 info-panel">
+            <h2 class="panel-title">Cum functioneaza</h2>
+            <ul class="rules-list">
+                <li>Un proiect poate avea un singur sprint activ la un moment dat.</li>
+                <li>Board-ul afiseaza intotdeauna sprintul activ.</li>
+                <li>La incheiere, issue-urile nefinalizate se intorc in backlog.</li>
+                <li>Stergerea unui sprint nu sterge issue-urile lui.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

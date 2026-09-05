@@ -1,0 +1,126 @@
+@model AdminLabelsViewModel
+@{
+    ViewData["Title"] = "Etichete globale";
+    var isEditing = Model.EditingLabelId.HasValue;
+}
+
+<div class="page-head">
+    <div>
+        <h1>Etichete globale</h1>
+        <p class="page-subtitle">
+            Etichetele sunt comune tuturor proiectelor, ca aceeasi categorie sa
+            insemne acelasi lucru peste tot.
+        </p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="card-panel">
+            <h2 class="panel-title">Etichete existente</h2>
+
+            @if (Model.Labels.Count == 0)
+            {
+                <div class="empty-state">
+                    <p>Nicio eticheta deocamdata.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table data-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Eticheta</th>
+                                <th>Culoare</th>
+                                <th>Folosita pe</th>
+                                <th class="text-end">Actiuni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var label in Model.Labels)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="label-chip" style="background-color:@label.ColorHex">
+                                            @label.Name
+                                        </span>
+                                    </td>
+                                    <td class="text-muted"><code>@label.ColorHex</code></td>
+                                    <td class="text-muted">@label.UsageCount issue-uri</td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           asp-action="Labels" asp-route-editId="@label.Id">Editeaz&#259;</a>
+
+                                        <form asp-action="DeleteLabel" asp-route-id="@label.Id" method="post"
+                                              class="d-inline"
+                                              onsubmit="return confirm('Eticheta va fi scoasa de pe toate issue-urile pe care este aplicata. Continui?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                Sterge
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card-panel">
+            <h2 class="panel-title">@(isEditing ? "Editeaza eticheta" : "Eticheta noua")</h2>
+
+            <form asp-action="SaveLabel" method="post" novalidate>
+                @if (isEditing)
+                {
+                    <input type="hidden" name="editId" value="@Model.EditingLabelId" />
+                }
+
+                <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+                <div class="mb-3">
+                    <label asp-for="NewLabel.Name" class="form-label">Nume</label>
+                    <input asp-for="NewLabel.Name" class="form-control"
+                           placeholder="frontend" />
+                    <span asp-validation-for="NewLabel.Name" class="field-error"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="NewLabel.ColorHex" class="form-label">Culoare</label>
+                    <div class="d-flex gap-2">
+                        <input asp-for="NewLabel.ColorHex" type="color"
+                               class="form-control form-control-color" />
+                        <input value="@Model.NewLabel.ColorHex" class="form-control" readonly />
+                    </div>
+                    <span asp-validation-for="NewLabel.ColorHex" class="field-error"></span>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        @(isEditing ? "Salveaza" : "Creeaza")
+                    </button>
+                    @if (isEditing)
+                    {
+                        <a class="btn btn-outline-secondary" asp-action="Labels">Renunta</a>
+                    }
+                </div>
+            </form>
+        </div>
+
+        <div class="card-panel mt-4 info-panel">
+            <h2 class="panel-title">Ce se intampla la stergere</h2>
+            <p class="text-muted mb-0">
+                Legaturile dintre eticheta si issue-uri sunt configurate cu cascada,
+                deci eticheta dispare automat de pe toate issue-urile. Nu ramane
+                nicio referinta orfana si nicio pagina nu mai afiseaza eticheta stearsa.
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

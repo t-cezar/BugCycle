@@ -1,0 +1,107 @@
+@model DashboardDto
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="page-head">
+    <div>
+        <h1>Dashboard</h1>
+        <p class="page-subtitle">Ce ai in lucru chiar acum, in toate proiectele tale.</p>
+    </div>
+    <a class="btn btn-primary" asp-controller="Projects" asp-action="Create">Proiect nou</a>
+</div>
+
+<div class="stat-grid">
+    @foreach (var status in Enum.GetValues<IssueStatus>())
+    {
+        <div class="stat-card @StatusClass(status)">
+            <span class="stat-value">@Model.CountsByStatus[status]</span>
+            <span class="stat-label">@Label(status)</span>
+        </div>
+    }
+    <div class="stat-card stat-total">
+        <span class="stat-value">@Model.OpenAssigned</span>
+        <span class="stat-label">Deschise, asignate mie</span>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-xl-8">
+        <div class="card-panel">
+            <h2 class="panel-title">Issue-urile mele</h2>
+
+            @if (Model.MyIssues.Count == 0)
+            {
+                <div class="empty-state">
+                    <p>Nu ai niciun issue deschis asignat.</p>
+                    <a class="btn btn-sm btn-outline-primary" asp-controller="Projects" asp-action="Index">
+                        Vezi proiectele
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table data-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Issue</th>
+                                <th>Titlu</th>
+                                <th>Status</th>
+                                <th>Prioritate</th>
+                                <th>Assignee</th>
+                                <th>Sprint</th>
+                                <th>SP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var issue in Model.MyIssues)
+                            {
+                                <partial name="_IssueRow" model="issue" />
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card-panel">
+            <h2 class="panel-title">Proiectele mele</h2>
+
+            @if (Model.MyProjects.Count == 0)
+            {
+                <div class="empty-state">
+                    <p>Nu faci parte din niciun proiect.</p>
+                    <a class="btn btn-sm btn-primary" asp-controller="Projects" asp-action="Create">
+                        Creeaza primul proiect
+                    </a>
+                </div>
+            }
+            else
+            {
+                <ul class="project-mini-list">
+                    @foreach (var project in Model.MyProjects)
+                    {
+                        <li>
+                            <a asp-controller="Projects" asp-action="Backlog" asp-route-id="@project.Id">
+                                <span class="project-key">@project.Key</span>
+                                <span class="project-mini-name">@project.Name</span>
+                            </a>
+                            <div class="project-mini-meta">
+                                @if (project.MyRole is not null)
+                                {
+                                    <span class="role-pill @ProjectRoleClass(project.MyRole.Value)">
+                                        @Label(project.MyRole.Value)
+                                    </span>
+                                }
+                                <span class="text-muted">@project.IssueCount issue-uri</span>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</div>

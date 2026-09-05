@@ -1,0 +1,217 @@
+@model BacklogViewModel
+@{
+    ViewData["Title"] = $"{Model.Project.Key} backlog";
+    ViewData["ActiveTab"] = "backlog";
+    var id = Model.Project.Id;
+}
+
+<partial name="_ProjectHeader" model="@((ProjectPageViewModel)Model)" />
+
+<div class="card-panel">
+    <form asp-action="Backlog" asp-route-id="@id" method="get" class="filter-bar">
+        <input type="hidden" name="showAll" value="@((!Model.ShowBacklogOnly).ToString().ToLowerInvariant())" />
+
+        <div class="filter-field">
+            <label class="form-label">Caut&#259;</label>
+            <input name="Search" value="@Model.Filter.Search" class="form-control form-control-sm"
+                   placeholder="titlu issue" />
+        </div>
+
+        <div class="filter-field">
+            <label class="form-label">Status</label>
+            <select name="Status" class="form-select form-select-sm">
+                <option value="">toate</option>
+                @foreach (var status in Enum.GetValues<IssueStatus>())
+                {
+                    <option value="@((int)status)" selected="@(Model.Filter.Status == status)">
+                        @Label(status)
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-field">
+            <label class="form-label">Tip</label>
+            <select name="Type" class="form-select form-select-sm">
+                <option value="">toate</option>
+                @foreach (var type in Enum.GetValues<IssueType>())
+                {
+                    <option value="@((int)type)" selected="@(Model.Filter.Type == type)">
+                        @Label(type)
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-field">
+            <label class="form-label">Prioritate</label>
+            <select name="Priority" class="form-select form-select-sm">
+                <option value="">toate</option>
+                @foreach (var priority in Enum.GetValues<IssuePriority>())
+                {
+                    <option value="@((int)priority)" selected="@(Model.Filter.Priority == priority)">
+                        @Label(priority)
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-field">
+            <label class="form-label">Assignee</label>
+            <select name="AssigneeId" class="form-select form-select-sm">
+                <option value="">toti</option>
+                @foreach (var user in Model.AssignableUsers)
+                {
+                    <option value="@user.Id" selected="@(Model.Filter.AssigneeId == user.Id)">
+                        @user.FullName
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-field">
+            <label class="form-label">Eticheta</label>
+            <select name="LabelId" class="form-select form-select-sm">
+                <option value="">toate</option>
+                @foreach (var label in Model.Labels)
+                {
+                    <option value="@label.Id" selected="@(Model.Filter.LabelId == label.Id)">
+                        @label.Name
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-sm btn-primary">Filtreaz&#259;</button>
+            <a class="btn btn-sm btn-outline-secondary" asp-action="Backlog" asp-route-id="@id"
+               asp-route-showAll="@(!Model.ShowBacklogOnly)">Reseteaz&#259;</a>
+        </div>
+    </form>
+
+    <div class="scope-switch">
+        <a class="scope-option @(Model.ShowBacklogOnly ? "is-active" : "")"
+           asp-action="Backlog" asp-route-id="@id" asp-route-showAll="false">
+            Doar backlog
+        </a>
+        <a class="scope-option @(Model.ShowBacklogOnly ? "" : "is-active")"
+           asp-action="Backlog" asp-route-id="@id" asp-route-showAll="true">
+            Toate issue-urile
+        </a>
+        <span class="scope-count">@Model.Issues.Count rezultate</span>
+    </div>
+
+    @if (Model.Issues.Count == 0)
+    {
+        <div class="empty-state">
+            <p>
+                @(Model.ShowBacklogOnly
+                    ? "Backlog-ul este gol. Toate issue-urile sunt deja planificate in sprinturi."
+                    : "Niciun issue nu corespunde filtrelor alese.")
+            </p>
+            @if (Model.Permissions.CanEditIssues && !Model.Project.IsArchived)
+            {
+                <a class="btn btn-sm btn-primary" asp-controller="Issues" asp-action="Create"
+                   asp-route-projectId="@id">Creeaz&#259; un issue</a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table data-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Issue</th>
+                        <th>Titlu</th>
+                        <th>Status</th>
+                        <th>Prioritate</th>
+                        <th>Assignee</th>
+                        <th>Sprint</th>
+                        <th>SP</th>
+                        @if (Model.Permissions.CanEditIssues)
+                        {
+                            <th class="text-end">Planificare</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var issue in Model.Issues)
+                    {
+                        <tr>
+                            <td class="col-key">
+                                <span class="type-chip @TypeClass(issue.Type)" title="@Label(issue.Type)">
+                                    @TypeIcon(issue.Type)
+                                </span>
+                                <a asp-controller="Issues" asp-action="Details" asp-route-id="@issue.Id"
+                                   class="issue-key">@issue.DisplayKey</a>
+                            </td>
+                            <td>
+                                <a asp-controller="Issues" asp-action="Details" asp-route-id="@issue.Id"
+                                   class="issue-title">@issue.Title</a>
+                                @if (issue.Labels.Count > 0)
+                                {
+                                    <div class="label-strip">
+                                        @foreach (var label in issue.Labels)
+                                        {
+                                            <span class="label-chip" style="background-color:@label.ColorHex">
+                                                @label.Name
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <span class="status-chip @StatusClass(issue.Status)">@Label(issue.Status)</span>
+                            </td>
+                            <td>
+                                <span class="priority-chip @PriorityClass(issue.Priority)">
+                                    @Label(issue.Priority)
+                                </span>
+                            </td>
+                            <td>
+                                @if (issue.Assignee is not null)
+                                {
+                                    <span class="assignee">
+                                        <span class="avatar avatar-sm">@issue.Assignee.Initials</span>
+                                        @issue.Assignee.FullName
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">neasignat</span>
+                                }
+                            </td>
+                            <td class="text-muted">@(issue.SprintName ?? "backlog")</td>
+                            <td class="text-muted">@(issue.StoryPoints?.ToString() ?? "-")</td>
+
+                            @if (Model.Permissions.CanEditIssues)
+                            {
+                                <td class="text-end">
+                                    @* Mutarea intre backlog si sprint se face cu un POST
+                                       normal, nu cu JavaScript: e o actiune rara si vrem
+                                       reincarcarea paginii ca sa se vada noile contoare. *@
+                                    <form asp-controller="Issues" asp-action="SetSprint"
+                                          asp-route-id="@issue.Id" method="post"
+                                          class="d-inline-flex gap-1 align-items-center">
+                                        <input type="hidden" name="projectId" value="@id" />
+                                        <select name="sprintId" class="form-select form-select-sm sprint-picker">
+                                            <option value="" selected="@(issue.SprintId is null)">backlog</option>
+                                            @foreach (var sprint in Model.OpenSprints)
+                                            {
+                                                <option value="@sprint.Id" selected="@(issue.SprintId == sprint.Id)">
+                                                    @sprint.Name
+                                                </option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Mut&#259;</button>
+                                    </form>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
